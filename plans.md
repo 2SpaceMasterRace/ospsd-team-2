@@ -8,3 +8,4 @@
 [SUB-TODO] Look into property-based testing libraries like hypr
 [SUB-TODO] Look into adding structured logging
 [SUB-TODO] Setup CircleCI for the project and look into best practices and improving performance of the CI
+[SUB-TODO] [Optional] Add AGENTS.md or SKILLS.md of some kind to help AI agents work better with the codebase.

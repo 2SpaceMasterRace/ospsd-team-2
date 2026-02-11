@@ -19,6 +19,14 @@ $ cd ospsd-team-2
 $ uv sync
 ```
 
+Create a feature branch to start developing, and open a pull-request once it's ready to be merged. One of the core team members will take a look and approve accordingly.
+
+## Dependencies
+These project relies on these excellent libraries:
+
+* `ruff` - An extremely fast Python linter and code formatter, written in Rust. 
+* `ty` - An extremely fast Python type checker and language server, written in Rust.
+* `pytest` - The pytest framework makes it easy to write small, readable tests, and can scale to support complex functional testing for applications and libraries.
 
 # Team 
 ## Core Members:
@@ -30,5 +38,8 @@ $ uv sync
 
 ## TA's:
 1.[Iván Aristy Eusebio](iae225@stern.nyu.edu)
-2.[Adithya Balachandra](ab12095@nyu.edu),
+2.[Adithya Balachandra](ab12095@nyu.edu)
 3.[Aranya Aryaman](aa12939@nyu.edu) 
+
+# License
+Code released under the MIT License.
