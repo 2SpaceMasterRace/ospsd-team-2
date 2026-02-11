@@ -37,9 +37,9 @@ These project relies on these excellent libraries:
 5. [Nicholas Maspons](mailto:nem8891@nyu.edu)
 
 ## TA's:
-1.[Iván Aristy Eusebio](iae225@stern.nyu.edu)
-2.[Adithya Balachandra](ab12095@nyu.edu)
-3.[Aranya Aryaman](aa12939@nyu.edu) 
+1. [Iván Aristy Eusebio](mailto:iae225@stern.nyu.edu)
+2. [Adithya Balachandra](mailto:ab12095@nyu.edu)
+3. [Aranya Aryaman](mailto:aa12939@nyu.edu) 
 
 # License
 Code released under the MIT License.
