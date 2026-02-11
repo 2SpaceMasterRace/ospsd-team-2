@@ -2,7 +2,7 @@
 Welcome to the official repository of Team 2 for the class CS-GY 9223/CS-UY 3943 - Special Topics in Computer Science : Open Source and Professional Software Development! 
 
 # Installation
-The project is temporarily dubbed ["Helios"](https://en.wikipedia.org/wiki/Helios). You can install with pip: 
+The project is temporarily dubbed ["Helios"](https://en.wikipedia.org/wiki/Helios). You can install with pip (WIP): 
 ```shell
 $ pip install helios
 ```
@@ -42,4 +42,4 @@ These project relies on these excellent libraries:
 3. [Aranya Aryaman](mailto:aa12939@nyu.edu) 
 
 # License
-Code released under the MIT License.
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
