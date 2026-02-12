@@ -1,4 +1,4 @@
-from core.main import main
+from implementation.implementation import main
 
 
 def test_main():

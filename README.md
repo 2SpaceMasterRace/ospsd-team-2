@@ -8,15 +8,24 @@ $ pip install helios
 ```
 
 ## Contributing 
-To start developing locally, create a fork of this repository and clone your fork with the following command replacing YOUR-USERNAME with your GitHub username:
+To start developing localle, create a fork of this repository and clone your fork with the following command replacing YOUR-USERNAME with your GitHub username:
 ```shell
-$ git clone https://github.com/YOUR-USERNAME/ospsd-team-2
+$ git clone git@github.com:YOUR-USERNAME/ospsd-team-2
+```
+[Install uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already done it before:
+
+```shell
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-You can now install the project and its dependencies using:
+You can now install the project's dependencies using:
 ```shell
 $ cd ospsd-team-2
 $ uv sync
+```
+To test if everything works, run the tests:
+```shell
+$ uv run pytest tests/
 ```
 
 Create a feature branch to start developing, and open a pull-request once it's ready to be merged. One of the core team members will take a look and approve accordingly.
