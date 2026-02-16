@@ -23,5 +23,17 @@ commands:
     steps:
       - run:
           name: Sync dependencies
-          command: uv sync --dev
+          command: uv sync --all-packages
+jobs:
+  lint:
+    executor: python-executor
+    steps:
+      - checkout
+      - setup-uv
+      - install-dependencies
+      - run: 
+          name: Ruff Check
+          command: |
+            uv run ruff check 
+
         
