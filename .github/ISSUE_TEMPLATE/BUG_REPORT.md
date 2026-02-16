@@ -1,11 +1,3 @@
----
-name: Bug Report
-about: Report a bug or unexpected behavior
-title: '[BUG] '
-labels: bug
-assignees: ''
----
-
 ## Description
 <!-- A clear and concise description of the bug -->
 

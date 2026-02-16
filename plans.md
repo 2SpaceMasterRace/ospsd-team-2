@@ -1,8 +1,9 @@
 +Inspired by John Carmack's plans.md files.
 
 [TODO] Start proper documentation for the project \
-[SUB-TODO] Setup mdBook \
 [SUB-TODO] Add proper git-workflow (assignment-amend) to CONTRIBUTION.md \
+[SUB-TODO] Read more into uv docs and look into extra flags \
+[DONE] Setup sphinx similar to attrs documentation \
 
 [TODO ] Add Proper Tooling to the project  \
 [SUB-TODO] Look into property-based testing libraries like hypr \
