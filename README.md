@@ -19,13 +19,13 @@ $ git clone git@github.com:YOUR-USERNAME/ospsd-team-2
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Windows (PowerShell)
-irm https://astral.sh/uv/install.ps1 | iex
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 You can now install the project's dependencies using:
 ```shell
 $ cd ospsd-team-2
-$ uv sync
+$ uv sync --all-packages
 ```
 To test if everything works, run the tests:
 ```shell
@@ -35,12 +35,21 @@ $ uv run pytest tests/
 Create a feature branch to start developing, and open a pull-request once it's ready to be merged. One of the core team members will take a look and approve accordingly.
 
 ## Dependencies
-These project relies on these excellent tools:
+These project is built on these excellent tools:
 
 * `ruff` - An extremely fast Python linter and code formatter, written in Rust. 
 * `ty` - An extremely fast Python type checker and language server, written in Rust.
 * `mypy` - An optional, open-source static type checker for Python that boosts code quality, safety, and readability by analyzing type hints (PEP 484) without running code.
 * `pytest` - An testing framework that makes it easy to write small, readable tests, and can scale to support complex functional testing for applications and libraries.
+* `sphinx` - An open-source documentation generator that translates a set of plain text source files into various output formats, such as HTML, PDF, and man pages.
+* `sphinx-autobuild` - A command-line tool that provides a development server for Sphinx documentation projects.
+* `furo` -  A clean customizable documentation theme for Sphinx 
+* `myst-parser` - A Sphinx and Docutils extension to parse MyST, a rich and extensible flavour of Markdown for authoring technical and scientific documentation.
+
+For CI/CD, we use:
+* `CircleCI` -  A continuous integration and continuous delivery platform that automates the build, test, and deployment of software.
+* `coverage.py` -  A tool for measuring the code coverage of Python programs, typically during testing.
+
 
 # Team 
 ## Core Members:
