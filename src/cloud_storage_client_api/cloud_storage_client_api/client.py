@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""
 
@@ -15,6 +14,7 @@ class CloudStorageClient(ABC):
         Returns:
             The remote URL or identifier of the uploaded file.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def download_file(self, remote_path: str, local_path: str) -> None:
@@ -24,6 +24,7 @@ class CloudStorageClient(ABC):
             remote_path: Path to the file in cloud storage.
             local_path: Local destination path.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def list_files(self, prefix: str = "") -> list[str]:
@@ -35,6 +36,7 @@ class CloudStorageClient(ABC):
         Returns:
             A list of file paths matching the prefix.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def delete_file(self, remote_path: str) -> None:
@@ -43,3 +45,8 @@ class CloudStorageClient(ABC):
         Args:
             remote_path: Path to the file in cloud storage.
         """
+        raise NotImplementedError
+
+def get_client(*, interactive: bool = False) -> CloudStorageClient:
+    """Return an instance of Cloud Storage Client."""
+    raise NotImplementedError
