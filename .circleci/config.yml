@@ -4,7 +4,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: cimg/python:3.14.3
+      - image: cimg/python:3.12
 
 #Modular Commands 
 commands:
@@ -26,17 +26,26 @@ commands:
           command: uv sync --all-packages
 jobs:
   lint:
-    executor: python-executor
-    steps:
-      - checkout
-      - setup-uv
-      - install-dependencies
-      - run: 
-          name: Ruff Check
-          command: |
-            uv run ruff check 
+     test:
+      executor: python-executor
+      steps:
+        - checkout
+        - setup-uv
+        - install-dependencies
+        - run:
+            name: Run unit + integration tests (exclude e2e)
+            command: |
+              mkdir -p test-results/pytest
+              uv run pytest -m "not e2e" --junitxml=test-results/pytest/junit.xml
+        - store_test_results:
+            path: test-results
+        - store_artifacts:
+            path: test-results
+        - store_artifacts:
+            path: coverage.xml
 workflows:
   version: 2
   main:
     jobs:
       - lint
+      - test

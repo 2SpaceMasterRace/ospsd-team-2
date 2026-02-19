@@ -2,7 +2,7 @@
 name = "cloud-storage-client-api"
 version = "0.1.0"
 description = "Abstract cloud storage client base class (ABC)"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 
 [build-system]
 requires = ["hatchling"]
