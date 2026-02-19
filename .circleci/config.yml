@@ -1,0 +1,42 @@
+version: 2.1
+
+#Repeatable Python Executor
+executors:
+  python-executor:
+    docker:
+      - image: cimg/python:3.14.3
+
+#Modular Commands 
+commands:
+  setup-uv:
+    description: "Installs and configures uv - our package manager"
+    steps:
+      - run: 
+          name: Install uv
+          command: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+  
+  install-dependencies:
+    description: "Use UV to install the dependencies"
+    steps:
+      - run:
+          name: Sync dependencies
+          command: uv sync --all-packages
+jobs:
+  lint:
+    executor: python-executor
+    steps:
+      - checkout
+      - setup-uv
+      - install-dependencies
+      - run: 
+          name: Ruff Check
+          command: |
+            uv run ruff check 
+workflows:
+  version: 2
+  main:
+    jobs:
+      - lint

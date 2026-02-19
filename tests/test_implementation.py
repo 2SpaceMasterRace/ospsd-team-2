@@ -1,7 +1,5 @@
-from core.main import main
+from implementation.implementation import main
 
 
 def test_main():
     assert main() is not None
-
-# Test Daniel 

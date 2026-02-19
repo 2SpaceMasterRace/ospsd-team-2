@@ -2,31 +2,54 @@
 Welcome to the official repository of Team 2 for the class CS-GY 9223/CS-UY 3943 - Special Topics in Computer Science : Open Source and Professional Software Development! 
 
 # Installation
-The project is temporarily dubbed ["Helios"](https://en.wikipedia.org/wiki/Helios). You can install with pip (WIP): 
+You can install with pip (WIP): 
 ```shell
-$ pip install helios
+$ pip install [our-project]
 ```
 
 ## Contributing 
 To start developing locally, create a fork of this repository and clone your fork with the following command replacing YOUR-USERNAME with your GitHub username:
 ```shell
-$ git clone https://github.com/YOUR-USERNAME/ospsd-team-2
+$ git clone git@github.com:YOUR-USERNAME/ospsd-team-2
+```
+[Install uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already done it before:
+
+```shell
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-You can now install the project and its dependencies using:
+You can now install the project's dependencies using:
 ```shell
 $ cd ospsd-team-2
-$ uv sync
+$ uv sync --all-packages
+```
+To test if everything works, run the tests:
+```shell
+$ uv run pytest tests/
 ```
 
 Create a feature branch to start developing, and open a pull-request once it's ready to be merged. One of the core team members will take a look and approve accordingly.
 
 ## Dependencies
-These project relies on these excellent libraries:
+These project is built on these excellent tools:
 
 * `ruff` - An extremely fast Python linter and code formatter, written in Rust. 
 * `ty` - An extremely fast Python type checker and language server, written in Rust.
-* `pytest` - The pytest framework makes it easy to write small, readable tests, and can scale to support complex functional testing for applications and libraries.
+* `mypy` - An optional, open-source static type checker for Python that boosts code quality, safety, and readability by analyzing type hints (PEP 484) without running code.
+* `pytest` - An testing framework that makes it easy to write small, readable tests, and can scale to support complex functional testing for applications and libraries.
+* `sphinx` - An open-source documentation generator that translates a set of plain text source files into various output formats, such as HTML, PDF, and man pages.
+* `sphinx-autobuild` - A command-line tool that provides a development server for Sphinx documentation projects.
+* `furo` -  A clean customizable documentation theme for Sphinx 
+* `myst-parser` - A Sphinx and Docutils extension to parse MyST, a rich and extensible flavour of Markdown for authoring technical and scientific documentation.
+
+For CI/CD, we use:
+* `CircleCI` -  A continuous integration and continuous delivery platform that automates the build, test, and deployment of software.
+* `coverage.py` -  A tool for measuring the code coverage of Python programs, typically during testing.
+
 
 # Team 
 ## Core Members:

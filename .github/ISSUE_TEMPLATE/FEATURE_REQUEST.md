@@ -1,18 +1,10 @@
----
-name: Feature Request
-about: Suggest an idea or enhancement for this project
-title: '[FEATURE] '
-labels: enhancement, needs-triage
-assignees: ''
----
-
-## Problem or Challenge ?
+## Problem or Challenge or Just Something Cool ?
 <!-- 
 Please describe what you are trying to do and why the current solution is insufficient.
 This helps developers understand the context and *why* for this feature, in addition to the *what*.
 -->
 
-**Is your feature request related to a problem?**
+**Is your feature request related to an existing problem?**
 Ex. I'm always frustrated when [...]
 
 ## Proposed Solution

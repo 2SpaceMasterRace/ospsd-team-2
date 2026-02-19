@@ -1,10 +1,3 @@
----
-name: Pull Request
-about: Submit changes to the project
-title: ''
-labels: ''
-assignees: ''
----
 ## Which issue does this PR close?
 
 <!--
