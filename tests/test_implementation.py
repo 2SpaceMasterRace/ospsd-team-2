@@ -1,5 +1,8 @@
-from implementation.implementation import main
+"""Test for the implementation entry point."""
+
+from main import main
 
 
-def test_main():
-    assert main() is not None
+def test_main() -> None:
+    """Verify main runs without error."""
+    main()

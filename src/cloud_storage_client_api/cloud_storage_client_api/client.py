@@ -1,4 +1,7 @@
+"""Abstract base class for cloud storage clients."""
+
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class CloudStorageClient(ABC):
@@ -14,15 +17,20 @@ class CloudStorageClient(ABC):
 
         Returns:
             The remote URL or identifier of the uploaded file.
+
         """
 
     @abstractmethod
-    def download_file(self, remote_path: str, local_path: str) -> None:
+    def download_file(
+        self, bucket_name: str, object_name: str, file_name: str,
+    ) -> bool:
         """Download a file from cloud storage.
 
         Args:
-            remote_path: Path to the file in cloud storage.
-            local_path: Local destination path.
+            bucket_name: Name of the bucket to download from.
+            object_name: Key of the object to download.
+            file_name: Local destination path.
+
         """
 
     @abstractmethod
@@ -34,12 +42,17 @@ class CloudStorageClient(ABC):
 
         Returns:
             A list of file paths matching the prefix.
+
         """
 
     @abstractmethod
-    def delete_file(self, remote_path: str) -> None:
+    def delete_file(
+        self, bucket_name: str, object_name: str,
+    ) -> dict[str, Any]:
         """Delete a file from cloud storage.
 
         Args:
-            remote_path: Path to the file in cloud storage.
+            bucket_name: Name of the bucket containing the object.
+            object_name: Key of the object to delete.
+
         """
