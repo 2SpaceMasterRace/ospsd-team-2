@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""
 
