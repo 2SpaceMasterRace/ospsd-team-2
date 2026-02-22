@@ -30,7 +30,7 @@ commands:
     description: "Set up AWS CLI with the provided credentials"
     steps:
       - aws-cli/setup:
-          role-arn: ${AWS_ROLE_ARN}
+          role_arn: ${AWS_ROLE_ARN}
           region: ${AWS_REGION}
           role_session_name: "ospsd-session"
           session_duration: "1800"
