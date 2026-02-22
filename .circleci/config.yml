@@ -55,7 +55,13 @@ jobs:
       - aws-setup
       - run: 
           name: Verify AWS auth
-          command: aws sts get-caller-identity
+          command: |
+            uv run python -c "
+            import os
+            from aws_client_impl.aws_client_impl.s3_client import S3Client
+            client =S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
+            print('AWS authentication successful')
+            "
           
 workflows:
   version: 2
