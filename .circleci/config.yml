@@ -6,6 +6,8 @@ executors:
     docker:
       - image: cimg/python:3.14.3
 
+orbs:
+  aws-cli: circleci/aws-cli@5.4.1
 #Modular Commands 
 commands:
   setup-uv:
@@ -24,6 +26,15 @@ commands:
       - run:
           name: Sync dependencies
           command: uv sync --all-packages
+  aws-setup:
+    description: "Set up AWS CLI with the provided credentials"
+    steps:
+      - aws-cli/setup:
+          role-arn: ${AWS_ROLE_ARN}
+          region: ${AWS_REGION}
+          role_session_name: "ospsd-session"
+          session_duration: "1800"
+
 jobs:
   lint:
     executor: python-executor
@@ -35,8 +46,21 @@ jobs:
           name: Ruff Check
           command: |
             uv run ruff check 
+  test:
+    executor: python-executor
+    steps:
+      - checkout
+      - setup-uv
+      - install-dependencies
+      - aws-setup
+      - run: 
+          name: Verify AWS auth
+          command: aws sts get-caller-identity
+          
 workflows:
   version: 2
   main:
     jobs:
       - lint
+      - test
+      

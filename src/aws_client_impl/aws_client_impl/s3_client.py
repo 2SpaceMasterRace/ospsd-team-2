@@ -1,6 +1,5 @@
 from cloud_storage_client_api import CloudStorageClient
 
-
 class S3Client(CloudStorageClient):
     """AWS S3 implementation of the CloudStorageClient interface."""
 
