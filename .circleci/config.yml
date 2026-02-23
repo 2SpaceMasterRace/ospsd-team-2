@@ -59,9 +59,14 @@ jobs:
             uv run python -c "
             import os
             from aws_client_impl.s3_client import S3Client
-            client =S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
-            result = client.upload_file('README.md', 'test/README.md')
-            print('upload ok:', result)
+            client = S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
+            client.upload_file('README.md', 'test/file1.md')
+            client.upload_file('pyproject.toml', 'test/file2.toml')
+            files = client.list_files('test/')
+            print('Files:', files)
+            assert 'test/file1.md' in files
+            assert 'test/file2.toml' in files
+            print('List ok')
             "
           
 workflows:

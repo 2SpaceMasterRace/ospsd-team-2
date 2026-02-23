@@ -48,8 +48,29 @@ class S3Client(CloudStorageClient):
         raise NotImplementedError
 
     def list_files(self, prefix: str = "") -> list[str]:
-        # TODO: Implement with boto3
-        raise NotImplementedError
+        """List objects in the S3 bucket.
+
+        The ``list_files`` method returns a list of object keys
+        in the bucket, optionally filtered by a prefix.
+
+        Args:
+            prefix: The prefix to filter objects by. Defaults to
+                empty string which returns all objects.
+
+        Returns:
+            A list of object keys matching the prefix.
+
+        Raises:
+            ClientError: If the listing fails due to
+                AWS service errors (logged and caught).
+        """
+        try:
+            response = self._client.list_objects_v2(Bucket=self._bucket_name, Prefix=prefix)
+            contents = response.get("Contents", [])
+            return [obj["Key"] for obj in contents]
+        except ClientError:
+            #{logger}
+            raise
 
     def delete_file(self, remote_path: str) -> None:
         # TODO: Implement with boto3
