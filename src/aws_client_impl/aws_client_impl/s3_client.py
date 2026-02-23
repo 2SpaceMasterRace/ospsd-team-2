@@ -1,5 +1,6 @@
 from cloud_storage_client_api import CloudStorageClient
 import boto3
+from botocore.exceptions import ClientError
 import os
 
 def _get_session() -> boto3.Session:
@@ -17,8 +18,30 @@ class S3Client(CloudStorageClient):
     
 
     def upload_file(self, local_path: str, remote_path: str) -> str:
-        # TODO: Implement with boto3
-        raise NotImplementedError
+        """Upload a file to an S3 bucket.
+
+        The ``upload_file`` method accepts a local file path and the
+        destination object key to upload the file to.
+
+        Args:
+            local_path: The path to the local file to upload.
+            remote_path: The S3 object key to upload the file to.
+
+        Returns:
+            The remote path of the uploaded object.
+
+        Raises:
+            ClientError: If the upload fails due to
+                AWS service errors (logged and caught).
+        """
+
+        try:
+            #{logger}
+            self._client.upload_file(local_path, self._bucket_name, remote_path)
+        except ClientError:
+            #{logger}
+            raise
+        return remote_path
 
     def download_file(self, remote_path: str, local_path: str) -> None:
         # TODO: Implement with boto3

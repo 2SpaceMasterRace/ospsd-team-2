@@ -60,7 +60,8 @@ jobs:
             import os
             from aws_client_impl.s3_client import S3Client
             client =S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
-            print('AWS authentication successful')
+            result = client.upload_file('README.md', 'test/README.md')
+            print('upload ok:', result)
             "
           
 workflows:
