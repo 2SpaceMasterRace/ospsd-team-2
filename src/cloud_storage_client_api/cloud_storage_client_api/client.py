@@ -19,7 +19,6 @@ class CloudStorageClient(ABC):
             The remote URL or identifier of the uploaded file.
 
         """
-        raise NotImplementedError
 
     @abstractmethod
     def download_file(
@@ -33,7 +32,6 @@ class CloudStorageClient(ABC):
             file_name: Local destination path.
 
         """
-        raise NotImplementedError
 
     @abstractmethod
     def list_files(self, prefix: str = "") -> list[str]:
@@ -46,7 +44,6 @@ class CloudStorageClient(ABC):
             A list of file paths matching the prefix.
 
         """
-        raise NotImplementedError
 
     @abstractmethod
     def delete_file(
@@ -59,8 +56,3 @@ class CloudStorageClient(ABC):
             object_name: Key of the object to delete.
 
         """
-        raise NotImplementedError
-
-def get_client(*, interactive: bool = False) -> CloudStorageClient:
-    """Return an instance of Cloud Storage Client."""
-    raise NotImplementedError
