@@ -50,4 +50,7 @@ select = ["ALL"]
 [tool.mypy]
 strict = true
 explicit_package_bases = true
-mypy_path = ["src/aws_client_impl/src", "src/cloud_storage_client_api"]
+mypy_path = ["src/aws_client_impl/*", "src/cloud_storage_client_api/*"]
+
+[tool.ty.rules]
+all = "error"

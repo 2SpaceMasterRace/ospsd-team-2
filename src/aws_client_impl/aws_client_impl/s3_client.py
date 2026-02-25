@@ -14,6 +14,7 @@ from cloud_storage_client_api import CloudStorageClient
 log: Any = structlog.get_logger()
 # reference: https://docs.aws.amazon.com/boto3/latest/reference/services/s3/service-resource/create_bucket.html
 s3 = boto3.resource("s3")
+log.info("Amazon S3 resource service client initalized")
 
 
 class S3Client(CloudStorageClient):
@@ -31,7 +32,9 @@ class S3Client(CloudStorageClient):
         self._region_name = region_name
 
     def create_bucket(
-        self, bucket_name: str, region_name: str | None = None,
+        self,
+        bucket_name: str,
+        region_name: str | None = None,
     ) -> bool:
         """Create an Amazon S3 bucket.
 
@@ -60,20 +63,59 @@ class S3Client(CloudStorageClient):
         try:
             bucket_config: dict[str, Any] = {}
             s3_client = boto3.client("s3", region_name)
-            log.info("Creating Amazon S3 Bucket...")
+            bucket = s3.Bucket(bucket_name)
             if region_name != "us_east-1":
                 bucket_config["CreateBucketConfiguration"] = {
                     "LocationConstraint": region_name,
                 }
-
+            log.info("Creating Amazon S3 Bucket...")
             s3_client.create_bucket(Bucket=bucket_name, **bucket_config)
-
+            bucket.wait_until_exists()
+            log.info(
+                "SUCCESS! Created bucket %s in region: %s",
+                bucket_name,
+                region_name,
+            )
         except ClientError:
             log.exception(
                 "Failed to create Amazon S3 Bucket",
                 bucket_name=bucket_name,
                 region_name=region_name,
             )
+            return False
+        return True
+
+    # There's two methods: delete and delete_bucket which basically do the same thing,
+    # don't know how to navigate this
+    def delete_bucket(
+        self,
+        bucket_name: str,
+    ) -> bool:
+        """Delete an Amazon S3 bucket.
+
+        All objects in the bucket must be deleted
+        before the bucket itself can be deleted.
+
+        Args:
+             bucket_name: Bucket to delete.
+
+        Returns:
+             True if the bucket was deleted successfully,
+             False otherwise.
+
+        Raises:
+             ClientError: If the bucket deletion fails due to
+                 AWS service errors (logged and caught).
+
+        """
+        try:
+            bucket = s3.Bucket(bucket_name)
+            log.info("Deleting Amazon S3 Bucket...")
+            bucket.delete(bucket_name)
+            bucket.wait_until_not_exists()
+            log.info("SUCCESS! Deleted bucket %s", bucket_name)
+        except ClientError:
+            log.exception("Failed to delete Amazon S3 Bucket", bucket_name=bucket_name)
             return False
         return True
 
@@ -90,7 +132,10 @@ class S3Client(CloudStorageClient):
     # https://docs.aws.amazon.com/boto3/latest/reference/
     # customizations/s3.html#boto3.s3.transfer.S3Transfer.ALLOWED_UPLOAD_ARGS
     def download_file(
-        self, bucket_name: str, object_name: str, file_name: str,
+        self,
+        bucket_name: str,
+        object_name: str,
+        file_name: str,
     ) -> bool:
         """Download an S3 object to a file.
 
@@ -125,6 +170,7 @@ class S3Client(CloudStorageClient):
         return True
 
     # Note: Consider combining download_file and download_fileobj in the future
+    # Also look into adding more exceptions for file path access
     def download_fileobj(
         self,
         bucket_name: str,
@@ -180,7 +226,9 @@ class S3Client(CloudStorageClient):
 
     # Note: Batch deletion of multiple files could be added for efficiency
     def delete_file(
-        self, bucket_name: str, object_name: str,
+        self,
+        bucket_name: str,
+        object_name: str,
     ) -> dict[str, Any]:
         """Remove an object from a bucket.
 
@@ -216,7 +264,7 @@ class S3Client(CloudStorageClient):
         """
         try:
             log.info("Deleting S3 Object...")
-            response = s3.delete_project(bucket_name, object_name)
+            response = s3.delete_object(bucket_name, object_name)
         except ClientError:
             log.exception(
                 "Failed to delete object from Amazon S3 Bucket",
