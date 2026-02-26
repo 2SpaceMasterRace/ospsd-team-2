@@ -61,7 +61,7 @@ class S3Client(CloudStorageClient):
             bucket_config: dict[str, Any] = {}
             s3_client = boto3.client("s3", region_name)
             log.info("Creating Amazon S3 Bucket...")
-            if region_name != "us_east-1":
+            if region_name != "us-east-1":
                 bucket_config["CreateBucketConfiguration"] = {
                     "LocationConstraint": region_name,
                 }
@@ -216,7 +216,7 @@ class S3Client(CloudStorageClient):
         """
         try:
             log.info("Deleting S3 Object...")
-            response = s3.delete_project(bucket_name, object_name)
+            response = s3.delete_object(bucket_name, object_name)
         except ClientError:
             log.exception(
                 "Failed to delete object from Amazon S3 Bucket",
