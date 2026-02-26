@@ -19,7 +19,7 @@ $ git clone git@github.com:YOUR-USERNAME/ospsd-team-2
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Windows (PowerShell)
-irm https://astral.sh/uv/install.ps1 | iex
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 You can now install the project's dependencies using:
