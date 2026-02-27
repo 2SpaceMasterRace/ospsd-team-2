@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -38,7 +39,6 @@ class S3Client(CloudStorageClient):
         self._region = region_name
         session = self._get_session()
         self._client = session.client("s3")
-    
 
     def upload_file(self, local_path: str, key: str) -> bool:
         """Upload a file to the S3 bucket.
@@ -52,33 +52,38 @@ class S3Client(CloudStorageClient):
             key: The S3 object key (destination path within the bucket).
 
         Returns:
-            True if the upload was successful.
+            True, if the upload was successful
 
         Raises:
-            ValueError: If ``key`` is empty or starts with a leading slash.
-            FileNotFoundError: If ``local_path`` does not exist.
-            ClientError: If the upload fails due to AWS service errors.
+            Value Error         : If key is empty or stars with a leading slash
+            ClientError         : If the upload fails due to
+                                AWS service errors (logged and caught).
+            FileNotFoundError   : If the local_path does not exist.
 
         """
         if not key:
-            raise ValueError("Key cannot be empty")
+            log.error("Key cannot be empty")
+            raise ValueError
         if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
-
+            log.error("S3 object key cannot start with a leading slash")
+            raise ValueError
         try:
             file_size = os.path.getsize(local_path)
             if file_size > MULTIPART_THRESHOLD:
                 return self._multipart_upload_file(local_path, key)
             log.info("Commencing file upload...")
             self._client.upload_file(local_path, self._bucket_name, key)
+            log.info("File Uploaded Sucessfully !")
         except ClientError:
             log.exception("Failed to upload", key=key)
             raise
         except FileNotFoundError:
-            log.exception("Could not find the file - please check file path", local_path=local_path)
+            log.exception(
+                "Unable to locate file. Check file path",
+                local_path=local_path)
             raise
         return True
-    
+
     def upload_obj(self, file_obj: BinaryIO, key: str) -> bool:
         """Upload a binary file-like object to the S3 bucket.
 
@@ -97,15 +102,18 @@ class S3Client(CloudStorageClient):
             True if the upload was successful.
 
         Raises:
-            ValueError: If ``key`` is empty, starts with a leading slash,
-                or ``file_obj`` is not a valid binary file-like object.
-            ClientError: If the upload fails due to AWS service errors.
+            ValueError : If key is empty, starts with a leading slash,
+                         or file_obje is not a valid binary file-like object.
+            ClientError: If the upload fails due to
+                         AWS service errors (logged and caught).
 
         """
         if not key:
-            raise ValueError("Key cannot be empty")
+            log.error("Key cannot be empty")
+            raise ValueError
         if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
+            log.error("S3 object key cannot start with a leading slash")
+            raise ValueError
         self._validate_file_obj(file_obj=file_obj)
 
         if not file_obj.seekable():
@@ -399,23 +407,25 @@ class S3Client(CloudStorageClient):
             A list of object keys matching the prefix.
 
         Raises:
-            ClientError: If the listing fails due to
-                AWS service errors (logged and caught).
+            ClientError : If the listing fails due to
+                        AWS service errors (logged and caught).
+
         """
         try:
-            response = self._client.list_objects_v2(Bucket=self._bucket_name, Prefix=prefix)
+            response = self._client.list_objects_v2(
+                Bucket=self._bucket_name,
+                Prefix=prefix)
             contents = response.get("Contents", [])
             return [obj["Key"] for obj in contents]
-        except ClientError:
-            #{logger}
-            raise
+        except ClientError as exc:
+            raise NotImplementedError from exc
 
     # Note: Batch deletion of multiple files could be added for efficiency
     def delete_file(
         self,
         bucket_name: str,
         object_name: str,
-    ) -> dict[str, Any]:
+    ) -> bool:
         """Remove an object from a bucket.
 
         The behavior depends on the bucket's versioning state:
@@ -450,19 +460,21 @@ class S3Client(CloudStorageClient):
         """
         try:
             log.info("Deleting S3 Object...")
-            response = s3.delete_object(bucket_name, object_name)
+            s3.delete_object(bucket_name, object_name)
         except ClientError:
             log.exception(
                 "Failed to delete object from Amazon S3 Bucket",
                 bucket_name=bucket_name,
                 object_name=object_name,
             )
-            return response
-        return response
+            return False
+        return True
+
 #--------------------------------------------HELPERS--------------------------------------------------------------------------
     def _get_session(self) -> boto3.Session:
-        """Helper function to create a boto3 session using environment variables."""
+        """Create a boto3 session using environment variables."""
         return boto3.Session(region_name=os.environ["AWS_REGION"])
+
     def _validate_file_obj(self, file_obj: BinaryIO) -> None:
         """Validate a file-like object for upload.
 
@@ -471,15 +483,22 @@ class S3Client(CloudStorageClient):
 
         Raises:
             ValueError: If the file object is not readable or not in binary mode.
+
         """
         try:
             if not file_obj.readable():
-                raise ValueError("file_obj must be readable")
+                log.error("file_obj must be readable")
+                raise ValueError
             if isinstance(file_obj.read(0), str):
-                raise ValueError("file_obj must be opened in binary mode, not text mode")
-        except AttributeError:
-            raise ValueError("file_obj must be a file-like object with a read() method")
-    def create_multipart_upload(self, key: str, content_length: int |None= None, checksum_algo: str | None = None):
+                log.error("file_obj must be opened in binary mode, not text mode")
+                raise TypeError
+        except AttributeError as exc:
+            log.exception(
+                "file_obj must be a file-like object with a read() method",
+            )
+            raise ValueError from exc
+
+    def create_multipart_upload(self, key: str) -> dict:
         """Initiate a multipart upload and return the upload ID.
 
         Must be called before ``upload_part``. The ``UploadId`` in the
@@ -493,74 +512,64 @@ class S3Client(CloudStorageClient):
 
         Args:
             key: The S3 object key to upload to.
-            content_length: Size of the object in bytes. Optional, but
-                recommended for unseekable streams to avoid boto3
-                buffering parts in memory.
-            checksum_algo: Integrity algorithm to apply to each part.
-                One of ``'CRC32'``, ``'CRC32C'``, ``'SHA1'``,
-                ``'SHA256'``, or ``'CRC64NVME'``. If specified, the same
-                algorithm must be passed to every ``upload_part`` call.
 
         Returns:
-            The raw boto3 response dict. Extract ``response['UploadId']``
-            to pass to subsequent multipart upload calls.
+            The raw boto3 response dict containing UploadId
 
         Raises:
-            ValueError: If ``key`` is empty or starts with a leading slash.
-            ClientError: If the request fails due to AWS service errors.
-            """
+            ValueError  : If ``key`` is empty or starts with a leading slash.
+            ClientError : If the request fails due to AWS service errors.
+
+        """
         if not key:
-             raise ValueError("Key cannot be empty")
+            log.error("Key cannot be empty")
+            raise ValueError
         if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
+            log.error("S3 object key cannot start with a leading slash")
+            raise ValueError
         kwargs = {
                 "Bucket": self._bucket_name,
                 "Key": key,
             }
-
-        if content_length is not None:
-            kwargs["ContentLength"] = content_length
-        if checksum_algo is not None:
-            kwargs["ChecksumAlgorithm"] = checksum_algo
         try:
             log.info("Initializing Multipart Upload...")
-            response = self._client.create_multipart_upload(**kwargs) 
+            response = self._client.create_multipart_upload(**kwargs)
+            log.info("SUCCESS! Multipart Upload is completed")
         except ClientError:
             log.exception(
-                "Failed to upload part",
+                "Failed Multipart Upload",
                 key=key,
                 )
             raise
         return response
-    def upload_part(self, key: str, upload_id: str, part_number: int, 
-                    body: bytes | BinaryIO, content_length: int |None= None, checksum_algo: str | None = None):
+    
+    def upload_part(
+        self,
+        key: str,
+        upload_id: str,
+        part_number: int,
+        body: bytes | BinaryIO,
+    ) -> dict[str, object]:
         """Upload a single part in a multipart upload.
-            Must be called after ``create_multipart_upload`` and before
-            ``complete_multipart_upload`` or ``abort_multipart_upload``.
-            ***Collect the returned ``ETag``*** from each part — you will need
-            them to complete the upload.
 
-            Part numbers must be between 1 and 10,000 inclusive and define
-            the part's position in the final assembled object. Uploading a
-            new part with an already-used part number overwrites the
-            previous part.
+        Must be called after ``create_multipart_upload`` and before
+        ``complete_multipart_upload`` or ``abort_multipart_upload``.
+        ***Collect the returned ``ETag``*** from each part — you will need
+        them to complete the upload.
 
-            Args:
+        Part numbers must be between 1 and 10,000 inclusive and define
+        the part's position in the final assembled object. Uploading a
+        new part with an already-used part number overwrites the
+        previous part.
+
+        Args:
             key: The S3 object key that was supplied to
                 ``create_multipart_upload``.
             upload_id: The upload ID returned by
                 ``create_multipart_upload``.
-            part_number: Position of this part in the object (1–10,000).
+            part_number: Position of this part in the object (1-10,000).
             body: The raw bytes or a binary file-like object for this
                 part. All parts except the last must be at least 5 MB.
-            content_length: Size of ``body`` in bytes. Provide this
-                when the size cannot be determined automatically
-                (e.g., an unseekable stream) to avoid boto3 buffering
-                the entire part in memory.
-            checksum_algorithm: Optional integrity algorithm to use.
-                One of ``'CRC32'``, ``'CRC32C'``, ``'SHA1'``,
-                ``'SHA256'``, or ``'CRC64NVME'``. Must match the
-                algorithm specified in ``create_multipart_upload``.
 
         Returns:
             The raw boto3 response dict. The ``'ETag'`` key is required
@@ -569,43 +578,42 @@ class S3Client(CloudStorageClient):
 
                 {
                     'ETag': '"d8c2eafd90c266e19ab9dcacc479f8af"',
-                    'ChecksumCRC32': 'string',   # present if requested
-                    'ChecksumSHA256': 'string',  # present if requested
+                    'ChecksumCRC32': 'string',
+                    'ChecksumSHA256': 'string',
                     ...
                 }
 
         Raises:
             ValueError: If ``key`` is empty, starts with ``'/'``, or
-                ``part_number`` is outside the 1–10,000 range.
+                ``part_number`` is outside the 1-10,000 range.
             ClientError: If the upload fails due to AWS service errors,
                 including ``NoSuchUpload`` (404) when the ``upload_id``
                 is invalid or the multipart upload has already been
                 completed or aborted.
-
         """
         if not key:
             raise ValueError("Key cannot be empty")
         if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
-        if not 1<=part_number<=10000:
-            raise ValueError("part_number must be in the range 1-10000 (inclusive)")
-        kwargs = {
-        "Bucket": self._bucket_name,
-        "Key": key,
-        "PartNumber": part_number,
-        "UploadId": upload_id,
-        "Body": body,
+            msg = "S3 object key cannot start with a leading slash"
+            raise ValueError(msg)
+        if not 1 <= part_number <= 10000:
+            msg = "part_number must be in the range 1-10000 (inclusive)"
+            raise ValueError(msg)
+
+        kwargs: dict[str, object] = {
+            "Bucket": self._bucket_name,
+            "Key": key,
+            "PartNumber": part_number,
+            "UploadId": upload_id,
+            "Body": body,
         }
-        if content_length is not None:
-            kwargs["ContentLength"] = content_length
-        if checksum_algo is not None:
-            kwargs["ChecksumAlgorithm"] = checksum_algo
+
         try:
             log.info(
                 "Uploading part...",
                 part_number=part_number,
             )
-            response = self._client.upload_part(**kwargs)
+            response: dict[str, object] = self._client.upload_part(**kwargs)
         except ClientError:
             log.exception(
                 "Failed to upload part",
@@ -620,56 +628,55 @@ class S3Client(CloudStorageClient):
         key: str,
         upload_id: str,
         parts: list[dict[str, Any]],
-    ) -> dict[str, Any]:
+    ) -> bool:
         """Complete a multipart upload by assembling the uploaded parts.
 
-        Must be called after all ``upload_part`` calls have succeeded.
-        Parts are assembled in order of their ``PartNumber``, not the
-        order they were uploaded.
+            Must be called after all ``upload_part`` calls have succeeded.
+            Parts are assembled in order of their ``PartNumber``, not the
+            order they were uploaded.
 
-        Args:
-            key: The S3 object key supplied to ``create_multipart_upload``.
-            upload_id: The upload ID returned by ``create_multipart_upload``.
-            parts: List of dicts collected from each ``upload_part`` response,
-                each containing ``'PartNumber'`` and ``'ETag'``::
+            Args:
+                key: The S3 object key supplied to ``create_multipart_upload``.
+                upload_id: The upload ID returned by ``create_multipart_upload``.
+                parts: List of dicts collected from each ``upload_part`` response,
+                    each containing ``'PartNumber'`` and ``'ETag'``::
 
-                    [
-                        {"PartNumber": 1, "ETag": '"abc123..."'},
-                        {"PartNumber": 2, "ETag": '"def456..."'},
-                    ]
+                        [
+                            {"PartNumber": 1, "ETag": '"abc123..."'},
+                            {"PartNumber": 2, "ETag": '"def456..."'},
+                        ]
 
-        Returns:
-            The raw boto3 response dict containing the final object's
-            location, bucket, key, and ``ETag``.
+            Returns:
+                True if the uploaded parts were successfully assembled and uploaded,
+                False otherwise.
 
-        Raises:
-            ValueError: If ``key`` is empty or starts with a leading slash.
-            ClientError: If the request fails due to AWS service errors,
-                including ``NoSuchUpload`` (404) if the ``upload_id`` is
-                invalid or has already been completed or aborted.
+            Raises:
+                ValueError: If ``key`` is empty or starts with a leading slash.
+                ClientError: If the request fails due to AWS service errors,
+                    including ``NoSuchUpload`` (404) if the ``upload_id`` is
+                    invalid or has already been completed or aborted.
+
         """
         if not key:
-            raise ValueError("Key cannot be empty")
+            log.error("Key cannot be empty")
+            raise ValueError
         if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
-
+            log.error("S3 object key cannot start with a leading slash")
+            raise ValueError
         try:
-            log.info("Completing multipart upload...", key=key, upload_id=upload_id)
-            response = self._client.complete_multipart_upload(
+            log.info("Assembling uploaded parts for multipart upload...", key=key)
+            self._client.complete_multipart_upload(
                 Bucket=self._bucket_name,
                 Key=key,
-                UploadId=upload_id,
                 MultipartUpload={"Parts": parts},
             )
+            log.info(
+                "SUCESS! All parts are assesmbled and finished uploading")
         except ClientError:
             log.exception(
-                "Failed to complete multipart upload",
+                "Failed to assemble parts and complete multipart upload",
                 key=key,
-                upload_id=upload_id,
+                parts=parts,
             )
-            raise
-        return response
-
-
-
-
+            return False
+        return True
