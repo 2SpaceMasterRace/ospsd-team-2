@@ -60,7 +60,7 @@ jobs:
             import os
             from aws_client_impl.s3_client import S3Client
             client = S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
-            client.upload_file('aws_client_impl/tests/Chapter_2_v8.2.pptx', 'test/multipart_chapter2.pptx')
+            client.upload_file('src/aws_client_impl/aws_client_impl/tests/Chapter_2_v8.2.pptx', 'test/multipart_chapter2.pptx')
             files = client.list_files('test/')
             print('Files:', files)
             assert 'test/multipart_chapter2.pptx' in files
