@@ -468,7 +468,7 @@ class S3Client(CloudStorageClient):
             return response
         return response
 #--------------------------------------------HELPERS--------------------------------------------------------------------------
-    def _get_session() -> boto3.Session:
+    def _get_session(self) -> boto3.Session:
         """Helper function to create a boto3 session using environment variables."""
         return boto3.Session(region_name=os.environ["AWS_REGION"])
     def _validate_file_obj(self, file_obj: BinaryIO) -> None:
