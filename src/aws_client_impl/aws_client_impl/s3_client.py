@@ -14,6 +14,8 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 
+#Constants
+MULTIPART_THRESHOLD = 100 * 1024 * 1024 
 
 log: Any = structlog.get_logger()
 # reference: https://docs.aws.amazon.com/boto3/latest/reference/services/s3/service-resource/create_bucket.html
@@ -39,23 +41,24 @@ class S3Client(CloudStorageClient):
     
 
     def upload_file(self, local_path: str, key: str) -> bool:
-        """Upload a file to an S3 bucket.
+        """Upload a file to the S3 bucket.
 
-        The ``upload_file`` method accepts a local file path and the
-        destination object key to upload the file to.
+        Automatically uses multipart upload for files exceeding
+        ``MULTIPART_THRESHOLD``. For smaller files, a standard single-part
+        upload is performed.
 
         Args:
             local_path: The path to the local file to upload.
-            key: The S3 object key to upload the file to.
+            key: The S3 object key (destination path within the bucket).
 
         Returns:
-            Returns True if successful
+            True if the upload was successful.
 
         Raises:
-            ClientError: If the upload fails due to
-                AWS service errors (logged and caught).
-            FileNotFoundError: If the local_path does 
-                not exist.
+            ValueError: If ``key`` is empty or starts with a leading slash.
+            FileNotFoundError: If ``local_path`` does not exist.
+            ClientError: If the upload fails due to AWS service errors.
+
         """
         if not key:
             raise ValueError("Key cannot be empty")
@@ -63,6 +66,9 @@ class S3Client(CloudStorageClient):
             raise ValueError("S3 object key cannot start with a leading slash")
 
         try:
+            file_size = os.path.getsize(local_path)
+            if file_size > MULTIPART_THRESHOLD:
+                return self._multipart_upload_file(local_path, key)
             log.info("Commencing file upload...")
             self._client.upload_file(local_path, self._bucket_name, key)
         except ClientError:
@@ -74,119 +80,133 @@ class S3Client(CloudStorageClient):
         return True
     
     def upload_obj(self, file_obj: BinaryIO, key: str) -> bool:
-        """Upload a file object to an Amazon S3 bucket.
+        """Upload a binary file-like object to the S3 bucket.
+
+        Automatically uses multipart upload for unseekable streams or
+        objects exceeding ``MULTIPART_THRESHOLD``. For smaller seekable
+        objects, a standard single-part upload is performed.
 
         Args:
-            file_obj: A file-like object to upload. Must be opened in binary mode
-                or be an in-memory bytes buffer (e.g., ``io.BytesIO``).
-            key: S3 object key (the name the file will have in the bucket).
+            file_obj: A file-like object to upload. Must be opened in
+                binary mode or be an in-memory bytes buffer
+                (e.g., ``io.BytesIO``). Unseekable streams are supported
+                but will always use multipart upload.
+            key: The S3 object key (destination path within the bucket).
 
         Returns:
-            True if the file was uploaded successfully,
-            False otherwise.
+            True if the upload was successful.
 
         Raises:
-            ClientError: If the upload fails due to
-                AWS service errors (logged and caught).
-        """ 
-        if not key:
-            raise ValueError("Key cannot be empty")
-        if key.startswith("/"):
-            raise ValueError("S3 object key cannot start with a leading slash")
-        self._validate_file_obj(file_obj=file_obj)
-
-        try:
-            log.info("Commencing object upload...")
-            self._client.upload_fileobj(file_obj, self._bucket_name, key)
-        except ClientError:
-            log.exception("Failed to upload", bucket_name=self._bucket_name)
-            raise
-        return True
-    
-    def upload_part(self, key: str, upload_id: str, part_number: int, 
-                    body: bytes | BinaryIO, content_length: int |None= None, checksum_algo: str | None = None):
-        """Upload a single part in a multipart upload.
-            Must be called after ``create_multipart_upload`` and before
-            ``complete_multipart_upload`` or ``abort_multipart_upload``.
-            ***Collect the returned ``ETag``*** from each part — you will need
-            them to complete the upload.
-
-            Part numbers must be between 1 and 10,000 inclusive and define
-            the part's position in the final assembled object. Uploading a
-            new part with an already-used part number overwrites the
-            previous part.
-
-            Args:
-            key: The S3 object key that was supplied to
-                ``create_multipart_upload``.
-            upload_id: The upload ID returned by
-                ``create_multipart_upload``.
-            part_number: Position of this part in the object (1–10,000).
-            body: The raw bytes or a binary file-like object for this
-                part. All parts except the last must be at least 5 MB.
-            content_length: Size of ``body`` in bytes. Provide this
-                when the size cannot be determined automatically
-                (e.g., an unseekable stream) to avoid boto3 buffering
-                the entire part in memory.
-            checksum_algorithm: Optional integrity algorithm to use.
-                One of ``'CRC32'``, ``'CRC32C'``, ``'SHA1'``,
-                ``'SHA256'``, or ``'CRC64NVME'``. Must match the
-                algorithm specified in ``create_multipart_upload``.
-
-        Returns:
-            The raw boto3 response dict. The ``'ETag'`` key is required
-            when assembling the ``Parts`` list for
-            ``complete_multipart_upload``::
-
-                {
-                    'ETag': '"d8c2eafd90c266e19ab9dcacc479f8af"',
-                    'ChecksumCRC32': 'string',   # present if requested
-                    'ChecksumSHA256': 'string',  # present if requested
-                    ...
-                }
-
-        Raises:
-            ValueError: If ``key`` is empty, starts with ``'/'``, or
-                ``part_number`` is outside the 1–10,000 range.
-            ClientError: If the upload fails due to AWS service errors,
-                including ``NoSuchUpload`` (404) when the ``upload_id``
-                is invalid or the multipart upload has already been
-                completed or aborted.
+            ValueError: If ``key`` is empty, starts with a leading slash,
+                or ``file_obj`` is not a valid binary file-like object.
+            ClientError: If the upload fails due to AWS service errors.
 
         """
         if not key:
             raise ValueError("Key cannot be empty")
         if key.startswith("/"):
             raise ValueError("S3 object key cannot start with a leading slash")
-        if not 1<=part_number<=10000:
-            raise ValueError("part_number must be in the range 1-10000 (inclusive)")
-        kwargs = {
-        "Bucket": self._bucket_name,
-        "Key": key,
-        "PartNumber": part_number,
-        "UploadId": upload_id,
-        "Body": body,
-        }
-        if content_length is not None:
-            kwargs["ContentLength"] = content_length
-        if checksum_algo is not None:
-            kwargs["ChecksumAlgorithm"] = checksum_algo
-        try:
-            log.info(
-                "Uploading part...",
-                part_number=part_number,
-            )
-            response = self._client.upload_part(**kwargs)
-        except ClientError:
-            log.exception(
-                "Failed to upload part",
-                key=key,
-                part_number=part_number,
-                upload_id=upload_id,
-            )
-            raise
-        return response
+        self._validate_file_obj(file_obj=file_obj)
 
+        if not file_obj.seekable():
+            return self._multipart_upload_obj(file_obj, key)
+
+        file_obj.seek(0, 2)
+        file_size = file_obj.tell()
+        file_obj.seek(0)
+
+        if file_size > MULTIPART_THRESHOLD:
+            return self._multipart_upload_obj(file_obj, key)
+
+        try:
+            log.info("Commencing object upload...")
+            self._client.upload_fileobj(file_obj, self._bucket_name, key)
+        except ClientError:
+            log.exception("Failed to upload object", key=key)
+            raise
+        return True
+    
+    def _multipart_upload_file(self, local_path: str, key: str) -> bool:
+        """Upload a large file using multipart upload.
+
+        Reads the file in chunks of ``MULTIPART_THRESHOLD`` size,
+        uploading each as a separate part. Automatically aborts the
+        multipart upload if any part fails.
+
+        Args:
+            local_path: The path to the local file to upload.
+            key: The S3 object key (destination path within the bucket).
+
+        Returns:
+            True if the upload was successful.
+
+        Raises:
+            ClientError: If any stage of the multipart upload fails.
+
+        """
+        response = self.create_multipart_upload(key=key)
+        upload_id = response["UploadId"]
+        parts = []
+
+        try:
+            with open(local_path, "rb") as f:
+                part_number = 1
+                while chunk := f.read(MULTIPART_THRESHOLD):
+                    part_response = self.upload_part(
+                        key=key,
+                        upload_id=upload_id,
+                        part_number=part_number,
+                        body=chunk,
+                    )
+                    parts.append({"PartNumber": part_number, "ETag": part_response["ETag"]})
+                    part_number += 1
+        except ClientError:
+            log.exception("Multipart upload failed, aborting...", key=key, upload_id=upload_id)
+            self.abort_multipart_upload(key=key, upload_id=upload_id)
+            raise
+
+        self.complete_multipart_upload(key=key, upload_id=upload_id, parts=parts)
+        return True
+    def _multipart_upload_obj(self, file_obj: BinaryIO, key: str) -> bool:
+        """Upload a large file-like object using multipart upload.
+
+        Reads the file-like object in chunks of ``MULTIPART_THRESHOLD`` size,
+        uploading each as a separate part. Automatically aborts the
+        multipart upload if any part fails.
+
+        Args:
+            file_obj: A file-like object opened in binary mode.
+            key: The S3 object key (destination path within the bucket).
+
+        Returns:
+            True if the upload was successful.
+
+        Raises:
+            ClientError: If any stage of the multipart upload fails.
+
+        """
+        response = self.create_multipart_upload(key=key)
+        upload_id = response["UploadId"]
+        parts = []
+
+        try:
+            part_number = 1
+            while chunk := file_obj.read(MULTIPART_THRESHOLD):
+                part_response = self.upload_part(
+                    key=key,
+                    upload_id=upload_id,
+                    part_number=part_number,
+                    body=chunk,
+                )
+                parts.append({"PartNumber": part_number, "ETag": part_response["ETag"]})
+                part_number += 1
+        except ClientError:
+            log.exception("Multipart upload failed, aborting...", key=key, upload_id=upload_id)
+            self.abort_multipart_upload(key=key, upload_id=upload_id)
+            raise
+
+        self.complete_multipart_upload(key=key, upload_id=upload_id, parts=parts)
+        return True
        
     def create_bucket(
         self,
@@ -518,6 +538,89 @@ class S3Client(CloudStorageClient):
                 "Failed to upload part",
                 key=key,
                 )
+            raise
+        return response
+    def upload_part(self, key: str, upload_id: str, part_number: int, 
+                    body: bytes | BinaryIO, content_length: int |None= None, checksum_algo: str | None = None):
+        """Upload a single part in a multipart upload.
+            Must be called after ``create_multipart_upload`` and before
+            ``complete_multipart_upload`` or ``abort_multipart_upload``.
+            ***Collect the returned ``ETag``*** from each part — you will need
+            them to complete the upload.
+
+            Part numbers must be between 1 and 10,000 inclusive and define
+            the part's position in the final assembled object. Uploading a
+            new part with an already-used part number overwrites the
+            previous part.
+
+            Args:
+            key: The S3 object key that was supplied to
+                ``create_multipart_upload``.
+            upload_id: The upload ID returned by
+                ``create_multipart_upload``.
+            part_number: Position of this part in the object (1–10,000).
+            body: The raw bytes or a binary file-like object for this
+                part. All parts except the last must be at least 5 MB.
+            content_length: Size of ``body`` in bytes. Provide this
+                when the size cannot be determined automatically
+                (e.g., an unseekable stream) to avoid boto3 buffering
+                the entire part in memory.
+            checksum_algorithm: Optional integrity algorithm to use.
+                One of ``'CRC32'``, ``'CRC32C'``, ``'SHA1'``,
+                ``'SHA256'``, or ``'CRC64NVME'``. Must match the
+                algorithm specified in ``create_multipart_upload``.
+
+        Returns:
+            The raw boto3 response dict. The ``'ETag'`` key is required
+            when assembling the ``Parts`` list for
+            ``complete_multipart_upload``::
+
+                {
+                    'ETag': '"d8c2eafd90c266e19ab9dcacc479f8af"',
+                    'ChecksumCRC32': 'string',   # present if requested
+                    'ChecksumSHA256': 'string',  # present if requested
+                    ...
+                }
+
+        Raises:
+            ValueError: If ``key`` is empty, starts with ``'/'``, or
+                ``part_number`` is outside the 1–10,000 range.
+            ClientError: If the upload fails due to AWS service errors,
+                including ``NoSuchUpload`` (404) when the ``upload_id``
+                is invalid or the multipart upload has already been
+                completed or aborted.
+
+        """
+        if not key:
+            raise ValueError("Key cannot be empty")
+        if key.startswith("/"):
+            raise ValueError("S3 object key cannot start with a leading slash")
+        if not 1<=part_number<=10000:
+            raise ValueError("part_number must be in the range 1-10000 (inclusive)")
+        kwargs = {
+        "Bucket": self._bucket_name,
+        "Key": key,
+        "PartNumber": part_number,
+        "UploadId": upload_id,
+        "Body": body,
+        }
+        if content_length is not None:
+            kwargs["ContentLength"] = content_length
+        if checksum_algo is not None:
+            kwargs["ChecksumAlgorithm"] = checksum_algo
+        try:
+            log.info(
+                "Uploading part...",
+                part_number=part_number,
+            )
+            response = self._client.upload_part(**kwargs)
+        except ClientError:
+            log.exception(
+                "Failed to upload part",
+                key=key,
+                part_number=part_number,
+                upload_id=upload_id,
+            )
             raise
         return response
     def complete_multipart_upload(

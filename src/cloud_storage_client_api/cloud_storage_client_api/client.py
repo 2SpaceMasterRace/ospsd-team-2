@@ -1,14 +1,14 @@
 """Abstract base class for cloud storage clients."""
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, BinaryIO
 
 
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""
 
     @abstractmethod
-    def upload_file(self, local_path: str, remote_path: str) -> str:
+    def upload_file(self, local_path: str, remote_path: str) -> bool:
         """Upload a file to cloud storage.
 
         Args:
@@ -16,7 +16,21 @@ class CloudStorageClient(ABC):
             remote_path: Destination path in cloud storage.
 
         Returns:
-            The remote URL or identifier of the uploaded file.
+            True if the upload was successful.
+
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def upload_obj(self, file_obj: BinaryIO, remote_path: str) -> bool:
+        """Upload a binary file-like object to cloud storage.
+
+        Args:
+            file_obj: A file-like object opened in binary mode.
+            remote_path: Destination path in cloud storage.
+
+        Returns:
+            True if the upload was successful.
 
         """
         raise NotImplementedError
