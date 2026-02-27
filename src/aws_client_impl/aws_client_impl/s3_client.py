@@ -711,7 +711,8 @@ class S3Client(CloudStorageClient):
             log.info("Assembling uploaded parts for multipart upload...", key=key)
             self._client.complete_multipart_upload(
                 Bucket=self._bucket_name,
-                Key=key,
+                Key=key,    
+                UploadID = upload_id,
                 MultipartUpload={"Parts": parts},
             )
             log.info(
