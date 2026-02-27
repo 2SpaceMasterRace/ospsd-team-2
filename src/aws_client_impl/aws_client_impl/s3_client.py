@@ -296,14 +296,6 @@ class S3Client(CloudStorageClient):
             return False
         return True
 
-    def upload_file(self, local_path: str, remote_path: str) -> str:
-        """Upload a file to S3.
-
-        .. todo:: Implement with boto3.
-
-        """
-        raise NotImplementedError
-
     # Note: ExtraArgs parameter and Callback parameter can be used to implement
     # a progress monitor. Reference for ExtraArgs parameters:
     # https://docs.aws.amazon.com/boto3/latest/reference/
