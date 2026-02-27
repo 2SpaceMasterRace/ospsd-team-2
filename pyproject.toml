@@ -15,6 +15,7 @@ requires-python = ">=3.14"
 dependencies = [
     "boto3-stubs>=1.42.54",
     "boto3[crt]>=1.42.54",
+    "coverage>=7.13.4",
     "rich>=14.3.3",
     "structlog>=25.5.0",
 ]
@@ -46,12 +47,41 @@ dev = [
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["S101"]
+ignore = ["S101"] # Justification: Assertions not only ensure that your program cannot continue to run with bad logic, they also document the expectations better than any comments could.
 
 [tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["S101"]
+"**/test_*.py" = ["S101"] # Justification: Same as [tool.ruff.lint]
 
 [tool.mypy]
 strict = true
 explicit_package_bases = true
 mypy_path = ["src/aws_client_impl/*", "src/cloud_storage_client_api/*"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".", 
+    "src"
+]
+testpaths = ["tests", "src/*/tests"]
+addopts = ["--cov", "--cov-report=term-missing", "--import-mode=importlib"]
+markers = [
+    "unit: marks tests as unit tests (fast, isolated)",
+    "integration: marks tests as integration tests (medium speed, real dependencies)",
+    "regression: marks tests that verify previously fixed bugs have not re-emerged or core functionality hasn't degraded",
+    "property: marks property-based tests (using Hypothesis) that generate a wide range of inputs to verify invariant behaviors",
+    "e2e: marks tests as end-to-end tests (slow, full system)",
+    "circleci: marks tests that can run in CI/CD environments without local credentials",
+    "local_credentials: marks tests that require local credentials.json or token.json files",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 80 # Justification: 80% is the sweet spot to make sure the code is well-tasted and not much developer hours are poured into testing. Refer Goodhart's Law.
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
