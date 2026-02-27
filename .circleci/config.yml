@@ -60,13 +60,11 @@ jobs:
             import os
             from aws_client_impl.s3_client import S3Client
             client = S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
-            client.upload_file('README.md', 'test/file1.md')
-            client.upload_file('pyproject.toml', 'test/file2.toml')
+            client.upload_file('aws_client_impl/tests/Chapter_2_v8.2.pptx', 'test/multipart_chapter2.pptx')
             files = client.list_files('test/')
             print('Files:', files)
-            assert 'test/file1.md' in files
-            assert 'test/file2.toml' in files
-            print('List ok')
+            assert 'test/multipart_chapter2.pptx' in files
+            print('Multipart upload ok')
             "
           
 workflows:

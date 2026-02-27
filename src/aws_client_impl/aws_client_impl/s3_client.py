@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 import os
 
 #Constants
-MULTIPART_THRESHOLD = 100 * 1024 * 1024 
+MULTIPART_THRESHOLD = 5 * 1024 * 1024 
 
 log: Any = structlog.get_logger()
 # reference: https://docs.aws.amazon.com/boto3/latest/reference/services/s3/service-resource/create_bucket.html
@@ -623,6 +623,50 @@ class S3Client(CloudStorageClient):
             )
             raise
         return response
+    def abort_multipart_upload(self, key: str, upload_id: str) -> bool:
+        """Abort an in-progress multipart upload and discard all uploaded parts.
+
+        Should be called when a multipart upload fails or is no longer needed.
+        Once aborted, the ``upload_id`` becomes invalid and all stored parts
+        are deleted, stopping AWS from charging for them.
+
+        Args:
+            key: The S3 object key supplied to ``create_multipart_upload``.
+            upload_id: The upload ID returned by ``create_multipart_upload``.
+
+        Returns:
+            True if the multipart upload was successfully aborted,
+            False otherwise.
+
+        Raises:
+            ValueError: If ``key`` is empty or starts with a leading slash.
+            ClientError: If the request fails due to AWS service errors,
+                including ``NoSuchUpload`` (404) if the ``upload_id`` is
+                invalid or has already been completed or aborted.
+
+        """
+        if not key:
+            log.error("Key cannot be empty")
+            raise ValueError
+        if key.startswith("/"):
+            log.error("S3 object key cannot start with a leading slash")
+            raise ValueError
+        try:
+            log.info("Aborting multipart upload...", key=key, upload_id=upload_id)
+            self._client.abort_multipart_upload(
+                Bucket=self._bucket_name,
+                Key=key,
+                UploadId=upload_id,
+            )
+            log.info("SUCCESS! Multipart upload aborted", key=key, upload_id=upload_id)
+        except ClientError:
+            log.exception(
+                "Failed to abort multipart upload",
+                key=key,
+                upload_id=upload_id,
+            )
+            return False
+        return True
     def complete_multipart_upload(
         self,
         key: str,

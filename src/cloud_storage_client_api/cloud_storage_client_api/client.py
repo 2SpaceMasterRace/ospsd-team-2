@@ -1,21 +1,14 @@
 """Abstract base class for cloud storage clients."""
 
 from abc import ABC, abstractmethod
-<<<<<<< HEAD
 from typing import Any, BinaryIO
-=======
->>>>>>> 78d20d3f16a06aca0fb3d1a6b3f622f1cc376dc4
 
 
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""
 
     @abstractmethod
-<<<<<<< HEAD
-    def upload_file(self, local_path: str, remote_path: str) -> bool:
-=======
     def upload_file(self, key: str, local_path: str) -> bool:
->>>>>>> 78d20d3f16a06aca0fb3d1a6b3f622f1cc376dc4
         """Upload a file to cloud storage.
 
         Args:
