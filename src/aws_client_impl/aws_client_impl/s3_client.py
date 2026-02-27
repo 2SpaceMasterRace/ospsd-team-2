@@ -712,7 +712,7 @@ class S3Client(CloudStorageClient):
             self._client.complete_multipart_upload(
                 Bucket=self._bucket_name,
                 Key=key,    
-                UploadID = upload_id,
+                UploadId = upload_id,
                 MultipartUpload={"Parts": parts},
             )
             log.info(
