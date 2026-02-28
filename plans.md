@@ -8,7 +8,7 @@
 [TODO ] Add Proper Tooling to the project  \
   [SUB-TODO] Look into property-based testing libraries like hypothesis \
   [SUB-TODO] Look into using graphite as a team, and make use of cool features like stacked diffs and pr's. \
-  [SUB-TODO] Look into adding structured logging \
+  [DONE] Look into adding structured logging \
   [SUB-TODO] Setup CircleCI for the project and look into best practices and improving performance of the CI \
   [SUB-TODO] Look into publishing the project as an installable python package in PyPI pipeline \
   [SUB-TODO] Look into healthy python codebase hygiene and setup \
