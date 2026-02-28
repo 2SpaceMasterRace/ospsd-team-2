@@ -10,7 +10,7 @@ import boto3
 import structlog
 from botocore.exceptions import ClientError
 
-from cloud_storage_client_api.src.client import CloudStorageClient
+from cloud_storage_client_api.client import CloudStorageClient
 
 # Constants
 MULTIPART_THRESHOLD = 100 * 1024 * 1024
