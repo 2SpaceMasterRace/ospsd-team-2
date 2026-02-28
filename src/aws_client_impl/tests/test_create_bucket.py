@@ -23,7 +23,9 @@ def test_create_bucket_us_east_1_does_not_send_location_constraint(
 ) -> None:
     """Test that us-east-1 region does not send location constraint."""
     fake_client = mocker.Mock()
+    fake_bucket = mocker.Mock()
     mocker.patch("aws_client_impl.s3_client.boto3.client", return_value=fake_client)
+    mocker.patch("aws_client_impl.s3_client.s3.Bucket", return_value=fake_bucket)
 
     c = S3Client(bucket_name="ignored")
     ok = c.create_bucket(bucket_name="my-bucket", region_name="us-east-1")
@@ -37,7 +39,9 @@ def test_create_bucket_other_region_sends_location_constraint(
 ) -> None:
     """Test that other regions send location constraint."""
     fake_client = mocker.Mock()
+    fake_bucket = mocker.Mock()
     mocker.patch("aws_client_impl.s3_client.boto3.client", return_value=fake_client)
+    mocker.patch("aws_client_impl.s3_client.s3.bucket", return_value=fake_bucket)
 
     c = S3Client(bucket_name="ignored")
     ok = c.create_bucket(bucket_name="my-bucket", region_name="us-west-2")
