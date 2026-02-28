@@ -1,24 +1,32 @@
-"""Entry point for the OSPSD Team 2 application."""
+"""Entry point for the OSPSD Team 2 application.
+
+Demonstrates the S3 cloud-storage client by creating a client,
+listing files in a bucket, and printing the results.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import structlog
 
-from aws_client_impl.src import S3Client
-
-if TYPE_CHECKING:
-    from cloud_storage_client_api.src import CloudStorageClient
+import aws_client_impl  # noqa: F401  # triggers dependency injection
+import cloud_storage_client_api
 
 log: Any = structlog.get_logger()
 
 
 def main() -> None:
-    """Create a cloud storage client and log a greeting."""
-    client: CloudStorageClient = S3Client(bucket_name="my-bucket")
-    log.info("Created cloud storage client", client=client)
-    log.info("Hello from Team 2!")
+    """Create a cloud storage client and demonstrate S3 operations."""
+    client = cloud_storage_client_api.get_client()
+    log.info("Created cloud storage client")
+
+    files = client.list_files("")
+    log.info("Listed files in bucket", count=len(files))
+    for key in files[:10]:
+        log.info("Found file", key=key)
+
+    log.info("Demo complete")
 
 
 if __name__ == "__main__":
