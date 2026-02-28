@@ -26,7 +26,8 @@ class S3Client(CloudStorageClient):
     def __init__(self, bucket_name: str, region_name: str = "us-east-1") -> None:
         self._bucket_name = bucket_name
         self._region_name = region_name
-        self._session = None  # cache
+        self._session = self._get_session()
+        self._client = self._session.client("s3")
 
     def upload_file(self, local_path: str, key: str) -> bool:
         """Upload a file to the S3 bucket.
