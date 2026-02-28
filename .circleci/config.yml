@@ -63,7 +63,7 @@ jobs:
           name: Run unit tests with coverage
           command: |
             uv run pytest \
-              src/aws_client_impl/tests/unit \
+              src/aws_client_impl/tests/ \
               --junitxml=test-results/unit/results.xml \
               --cov-report=xml:coverage/unit-coverage.xml \
               --cov-report=html:coverage/unit-html \
