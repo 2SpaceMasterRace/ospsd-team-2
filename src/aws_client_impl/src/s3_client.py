@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 from cloud_storage_client_api import CloudStorageClient
 
 #Constants
-MULTIPART_THRESHOLD = 5 * 1024 * 1024
+MULTIPART_THRESHOLD = 100 * 1024 * 1024
 MAX_LIMIT = 10000
 
 log: Any = structlog.get_logger()
