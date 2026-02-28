@@ -1,6 +1,6 @@
 """Integration tests for CloudStorageClient interface."""
 
-from cloud_storage_client_api.client import CloudStorageClient
+from cloud_storage_client_api.src.client import CloudStorageClient
 
 
 def test_cloud_storage_client_has_expected_methods() -> None:

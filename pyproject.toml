@@ -37,6 +37,7 @@ aws-client-impl = { workspace = true }
 dev = [
     "mypy>=1.19.1",
     "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
     "ruff>=0.15.0",
     "ty>=0.0.16",
     "furo>=2025.12.19",
@@ -47,7 +48,10 @@ dev = [
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["S101"] # Justification: Assertions not only ensure that your program cannot continue to run with bad logic, they also document the expectations better than any comments could.
+ignore = [
+    "S101",     # Justification: Assertions not only ensure that your program cannot continue to run with bad logic, they also document the expectations better than any comments could.
+    "INP001"   # Justification: tests/ intentionally has no __init__.py per project guidelines and rubric requirements.
+] 
 
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["S101"] # Justification: Same as [tool.ruff.lint]
@@ -55,7 +59,20 @@ ignore = ["S101"] # Justification: Assertions not only ensure that your program 
 [tool.mypy]
 strict = true
 explicit_package_bases = true
-mypy_path = ["src/aws_client_impl/*", "src/cloud_storage_client_api/*"]
+mypy_path = ["src"]
+exclude = [
+    "src/aws_client_impl/",
+    "src/cloud_storage_client_api/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "main",
+    "aws_client_impl.src.s3_client",
+    "cloud_storage_client_api.src.client",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 pythonpath = [

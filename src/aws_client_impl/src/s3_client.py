@@ -10,10 +10,10 @@ import boto3
 import structlog
 from botocore.exceptions import ClientError
 
-from cloud_storage_client_api import CloudStorageClient
+from cloud_storage_client_api.src.client import CloudStorageClient
 
-#Constants
-MULTIPART_THRESHOLD = 5 * 1024 * 1024
+# Constants
+MULTIPART_THRESHOLD = 100 * 1024 * 1024
 MAX_LIMIT = 10000
 
 log: Any = structlog.get_logger()
@@ -78,7 +78,8 @@ class S3Client(CloudStorageClient):
         except FileNotFoundError:
             log.exception(
                 "Unable to locate file. Check file path",
-                local_path=local_path)
+                local_path=local_path,
+            )
             raise
         return True
 
@@ -164,10 +165,12 @@ class S3Client(CloudStorageClient):
                         part_number=part_number,
                         body=chunk,
                     )
-                    parts.append({
-                        "PartNumber": part_number,
-                        "ETag": part_response["ETag"],
-                    })
+                    parts.append(
+                        {
+                            "PartNumber": part_number,
+                            "ETag": part_response["ETag"],
+                        },
+                    )
                     part_number += 1
         except ClientError:
             log.exception(
@@ -180,6 +183,7 @@ class S3Client(CloudStorageClient):
 
         self.complete_multipart_upload(key=key, upload_id=upload_id, parts=parts)
         return True
+
     def _multipart_upload_obj(self, file_obj: BinaryIO, key: str) -> bool:
         """Upload a large file-like object using multipart upload.
 
@@ -211,10 +215,12 @@ class S3Client(CloudStorageClient):
                     part_number=part_number,
                     body=chunk,
                 )
-                parts.append({
-                    "PartNumber": part_number,
-                    "ETag": part_response["ETag"],
-                })
+                parts.append(
+                    {
+                        "PartNumber": part_number,
+                        "ETag": part_response["ETag"],
+                    },
+                )
                 part_number += 1
         except ClientError:
             log.exception(
@@ -426,7 +432,8 @@ class S3Client(CloudStorageClient):
         try:
             response = self._client.list_objects_v2(
                 Bucket=self._bucket_name,
-                Prefix=prefix)
+                Prefix=prefix,
+            )
             contents = response.get("Contents", [])
             return [obj["Key"] for obj in contents]
         except ClientError as exc:
@@ -482,7 +489,7 @@ class S3Client(CloudStorageClient):
             return False
         return True
 
-#--------------------------------------------HELPERS--------------------------------------------------------------------------
+    # Helpers
     def _get_session(self) -> boto3.Session:
         """Create a boto3 session using environment variables."""
         return boto3.Session(region_name=os.environ["AWS_REGION"])
@@ -540,9 +547,9 @@ class S3Client(CloudStorageClient):
             log.error("S3 object key cannot start with a leading slash")
             raise ValueError
         kwargs = {
-                "Bucket": self._bucket_name,
-                "Key": key,
-            }
+            "Bucket": self._bucket_name,
+            "Key": key,
+        }
         try:
             log.info("Initializing Multipart Upload...")
             response = self._client.create_multipart_upload(**kwargs)
@@ -551,7 +558,7 @@ class S3Client(CloudStorageClient):
             log.exception(
                 "Failed Multipart Upload",
                 key=key,
-                )
+            )
             raise
         return response
 
@@ -636,6 +643,7 @@ class S3Client(CloudStorageClient):
             )
             raise
         return response
+
     def abort_multipart_upload(self, key: str, upload_id: str) -> bool:
         """Abort an in-progress multipart upload and discard all uploaded parts.
 
@@ -680,6 +688,7 @@ class S3Client(CloudStorageClient):
             )
             return False
         return True
+
     def complete_multipart_upload(
         self,
         key: str,
@@ -725,11 +734,10 @@ class S3Client(CloudStorageClient):
             self._client.complete_multipart_upload(
                 Bucket=self._bucket_name,
                 Key=key,
-                UploadId = upload_id,
+                UploadId=upload_id,
                 MultipartUpload={"Parts": parts},
             )
-            log.info(
-                "SUCESS! All parts are assesmbled and finished uploading")
+            log.info("SUCESS! All parts are assesmbled and finished uploading")
         except ClientError:
             log.exception(
                 "Failed to assemble parts and complete multipart upload",

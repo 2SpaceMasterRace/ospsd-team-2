@@ -2,8 +2,9 @@
 
 from typing import TYPE_CHECKING
 
-from aws_client_impl.s3_client import S3Client
 from botocore.exceptions import ClientError
+
+from aws_client_impl.src.s3_client import S3Client
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -20,7 +21,8 @@ def _client_error(op: str = "DownloadFileobj") -> ClientError:
 
 
 def test_download_fileobj_returns_true_on_success(
-    mocker: MockerFixture, tmp_path: Path,
+    mocker: MockerFixture,
+    tmp_path: Path,
 ) -> None:
     """Test that download_fileobj returns True on success."""
     fake_s3 = mocker.Mock()
@@ -40,7 +42,8 @@ def test_download_fileobj_returns_true_on_success(
 
 
 def test_download_fileobj_returns_false_on_client_error(
-    mocker: MockerFixture, tmp_path: Path,
+    mocker: MockerFixture,
+    tmp_path: Path,
 ) -> None:
     """Test that download_fileobj returns False on client error."""
     fake_s3 = mocker.Mock()

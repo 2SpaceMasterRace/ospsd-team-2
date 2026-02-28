@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from aws_client_impl import S3Client
+from aws_client_impl.src import S3Client
 
 if TYPE_CHECKING:
-    from cloud_storage_client_api import CloudStorageClient
+    from cloud_storage_client_api.src import CloudStorageClient
 
 log: Any = structlog.get_logger()
 

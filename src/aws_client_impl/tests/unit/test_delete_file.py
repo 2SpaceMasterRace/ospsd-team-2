@@ -3,8 +3,9 @@
 from typing import TYPE_CHECKING
 
 import pytest
-from aws_client_impl.s3_client import S3Client
 from botocore.exceptions import ClientError
+
+from aws_client_impl.src.s3_client import S3Client
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
