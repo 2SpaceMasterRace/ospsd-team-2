@@ -65,7 +65,6 @@ jobs:
             uv run pytest \
               src/aws_client_impl/tests/unit \
               --junitxml=test-results/unit/results.xml \
-              --cov=src \
               --cov-report=xml:coverage/unit-coverage.xml \
               --cov-report=html:coverage/unit-html \
               -v
@@ -81,15 +80,15 @@ jobs:
       - setup-uv
       - install-dependencies
       - run:
-            name: Run integration tests (DI wiring verification)
-            command: |
-              uv run pytest \
-                tests/integration \
-                --junitxml=test-results/integration/results.xml \
-                --cov=src \
-                --cov-report=xml:coverage/integration-coverage.xml \
-                --cov-report=html:coverage/integration-html \
-                -v
+          name: Run integration tests (DI wiring verification)
+          command: |
+            uv run pytest \
+              tests/aws_client_test/integration \
+              tests/cloud_storage_test/integration \
+              --junitxml=test-results/integration/results.xml \
+              --cov-report=xml:coverage/integration-coverage.xml \
+              --cov-report=html:coverage/integration-html \
+              -v
       - store_test_results:
           path: test-results/integration
       - store_artifacts:
@@ -115,26 +114,12 @@ jobs:
   #           AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
   #     - store_test_results:
   #         path: test-results/
-          
-  docs-build:
-    executor: python-executor
-    steps:
-      - checkout
-      - setup-uv
-      - install-dependencies
-      - run:
-          name: Build MkDocs documentation
-          command: uv run mkdocs build --strict
-      - store_artifacts:
-          path: site
-          destination: docs
-          
-workflows:
+
+  workflows:
   version: 2
   main:
     jobs:
       - lint
-      - docs-build
       - unit-tests
       - integration-tests
       

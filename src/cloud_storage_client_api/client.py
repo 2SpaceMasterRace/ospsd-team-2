@@ -38,7 +38,10 @@ class CloudStorageClient(ABC):
 
     @abstractmethod
     def download_file(
-        self, container: str, object_name: str, file_name: str,
+        self,
+        container: str,
+        object_name: str,
+        file_name: str,
     ) -> bool:
         """Download a file from cloud storage.
 
@@ -65,7 +68,9 @@ class CloudStorageClient(ABC):
 
     @abstractmethod
     def delete_file(
-        self, container: str, object_name: str,
+        self,
+        container: str,
+        object_name: str,
     ) -> bool:
         """Delete a file from cloud storage.
 
@@ -75,6 +80,7 @@ class CloudStorageClient(ABC):
 
         """
         raise NotImplementedError
+
 
 def get_client(*, interactive: bool = False) -> CloudStorageClient:
     """Return an instance of Cloud Storage Client."""
