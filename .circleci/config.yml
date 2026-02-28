@@ -46,32 +46,95 @@ jobs:
           name: Ruff Check
           command: |
             uv run ruff check 
-  test:
+      - run:
+          name: Ruff — format check
+          command: uv run ruff format --check .
+      - run:
+          name: Mypy — strict type checking
+          command: uv run mypy --strict .
+  
+  unit-tests:
     executor: python-executor
     steps:
       - checkout
       - setup-uv
       - install-dependencies
-      - aws-setup
-      - run: 
-          name: Verify AWS auth
+      - run:
+          name: Run unit tests with coverage
           command: |
-            export PYTHONPATH="${PYTHONPATH}:src"
-            uv run python -c "
-            import os
-            from aws_client_impl.s3_client import S3Client
-            client = S3Client(bucket_name=os.environ['AWS_BUCKET_NAME'])
-            client.upload_file('src/aws_client_impl/aws_client_impl/tests/Chapter_2_v8.2.pptx', 'test/multipart_chapter2.pptx')
-            files = client.list_files('test/')
-            print('Files:', files)
-            assert 'test/multipart_chapter2.pptx' in files
-            print('Multipart upload ok')
-            "
+            uv run pytest \
+              src/aws_client_impl/tests/unit \
+              --junitxml=test-results/unit/results.xml \
+              --cov=src \
+              --cov-report=xml:coverage/unit-coverage.xml \
+              --cov-report=html:coverage/unit-html \
+              -v
+      - store_test_results:
+          path: test-results/unit
+      - store_artifacts:
+          path: coverage/unit-html
+          destination: coverage/unit
+  integration-tests:
+    executor: python-executor
+    steps:
+      - checkout
+      - setup-uv
+      - install-dependencies
+      - run:
+            name: Run integration tests (DI wiring verification)
+            command: |
+              uv run pytest \
+                tests/integration \
+                --junitxml=test-results/integration/results.xml \
+                --cov=src \
+                --cov-report=xml:coverage/integration-coverage.xml \
+                --cov-report=html:coverage/integration-html \
+                -v
+      - store_test_results:
+          path: test-results/integration
+      - store_artifacts:
+          path: coverage/integration-html
+          destination: coverage/integration
+
+  # e2e-tests:
+  #   executor: python-executor
+  #   steps:
+  #     - checkout
+  #     - setup-uv
+  #     - install-dependencies
+  #     - aws-setup
+  #     - run:
+  #         name: Run E2E tests against real AWS infrastructure
+  #         command: |
+  #           uv run pytest \
+  #             tests/e2e \
+  #             --junitxml=test-results/e2e/results.xml \
+  #             -v
+  #         environment:
+  #           AWS_REGION: ${AWS_REGION}
+  #           AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+  #     - store_test_results:
+  #         path: test-results/
+          
+  docs-build:
+    executor: python-executor
+    steps:
+      - checkout
+      - setup-uv
+      - install-dependencies
+      - run:
+          name: Build MkDocs documentation
+          command: uv run mkdocs build --strict
+      - store_artifacts:
+          path: site
+          destination: docs
           
 workflows:
   version: 2
   main:
     jobs:
       - lint
-      - test
+      - docs-build
+      - unit-tests
+      - integration-tests
       
