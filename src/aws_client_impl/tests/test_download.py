@@ -1,6 +1,6 @@
 import pytest
 from botocore.exceptions import ClientError
-from src.s3_client import S3Client
+from aws_client_impl.src.s3_client import S3Client
 
 
 def _client_error(op="DownloadFile"):

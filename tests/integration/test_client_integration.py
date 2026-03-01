@@ -8,7 +8,7 @@ to know which class they receive.
 
 import pytest
 
-from src.s3_client import S3Client
+from aws_client_impl.src.s3_client import S3Client
 import cloud_storage_client_api.src.client as _cloud_storage_api
 from cloud_storage_client_api.src.client import CloudStorageClient
 

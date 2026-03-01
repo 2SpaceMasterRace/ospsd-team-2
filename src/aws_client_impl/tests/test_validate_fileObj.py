@@ -5,7 +5,7 @@ import io
 
 import pytest
 
-from src.s3_client import S3Client
+from aws_client_impl.src.s3_client import S3Client
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

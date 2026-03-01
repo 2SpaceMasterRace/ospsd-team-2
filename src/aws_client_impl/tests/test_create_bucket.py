@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from botocore.exceptions import ClientError
 
-from  src.s3_client import S3Client
+from aws_client_impl.src.s3_client import S3Client
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
