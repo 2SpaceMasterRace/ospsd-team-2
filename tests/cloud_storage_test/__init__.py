@@ -1,1 +1,0 @@
-"""Cloud storage client tests."""

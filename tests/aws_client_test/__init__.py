@@ -1,1 +1,0 @@
-"""AWS client integration tests."""

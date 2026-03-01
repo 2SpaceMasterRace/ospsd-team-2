@@ -1,7 +1,7 @@
 """Integration tests for S3Client conformance to CloudStorageClient interface."""
 
-from aws_client_impl.src.s3_client import S3Client
-from cloud_storage_client_api.src.client import CloudStorageClient
+from aws_client_impl.s3_client import S3Client
+from cloud_storage_client_api.client import CloudStorageClient
 
 
 def test_s3client_is_subclass_of_interface() -> None:
