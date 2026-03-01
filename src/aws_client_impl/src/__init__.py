@@ -1,9 +1,8 @@
-"""Public exports for the AWS S3 client implementation package."""
-from aws_client_impl.s3_client import S3Client, get_client_impl
-from aws_client_impl.s3_client import register as _register_client
+from aws_client_impl.src.s3_client import S3Client
+from cloud_storage_client_api.src.client import register_client
 
 def register() -> None:
     """Register the S3 client implementation."""
-    _register_client()
+    register_client(S3Client)
 
 register()

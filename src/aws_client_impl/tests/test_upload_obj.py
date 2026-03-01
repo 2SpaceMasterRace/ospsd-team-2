@@ -6,8 +6,8 @@ import io
 import pytest
 from botocore.exceptions import ClientError
 
-from aws_client_impl import s3_client as s3_mod
-from aws_client_impl.s3_client import S3Client
+from src import s3_client as s3_mod
+from src.s3_client import S3Client
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

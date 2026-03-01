@@ -3,6 +3,19 @@
 from abc import ABC, abstractmethod
 from typing import BinaryIO
 
+_registry: type[CloudStorageClient] | None = None
+
+def register_client(client_class: type[CloudStorageClient]) -> None:
+    """Register a concrete CloudStorageClient implementation."""
+    global _registry
+    _registry = client_class
+
+
+def get_client(*, interactive: bool = False) -> CloudStorageClient:
+    """Return an instance of Cloud Storage Client."""
+    if _registry is None:
+        raise NotImplementedError
+    return _registry()
 
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""

@@ -10,7 +10,7 @@ import boto3
 import structlog
 from botocore.exceptions import ClientError
 
-from cloud_storage_client_api.client import CloudStorageClient
+from cloud_storage_client_api.src.client import CloudStorageClient
 
 # Constants
 MULTIPART_THRESHOLD = 100 * 1024 * 1024
@@ -752,5 +752,5 @@ def get_client_impl(*, interactive: bool = False) -> S3Client:
 
 def register() -> None:
     """Replace the abstract get_client with this implementation."""
-    import cloud_storage_client_api.client as _api
-    _api.get_client = get_client_impl  # type: ignore[assignment]
+    import cloud_storage_client_api.src.client as _api
+    _api.get_client = get_client_impl  
