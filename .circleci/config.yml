@@ -83,8 +83,7 @@ jobs:
           name: Run integration tests (DI wiring verification)
           command: |
             uv run pytest \
-              tests/aws_client_test/integration \
-              tests/cloud_storage_test/integration \
+              tests/integration/ \
               --junitxml=test-results/integration/results.xml \
               --cov-report=xml:coverage/integration-coverage.xml \
               --cov-report=html:coverage/integration-html \

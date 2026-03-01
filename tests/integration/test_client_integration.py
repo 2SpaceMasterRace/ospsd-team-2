@@ -8,8 +8,8 @@ to know which class they receive.
 
 import pytest
 
-from aws_client_impl.src.s3_client import S3Client
-from cloud_storage_client_api.src.client import CloudStorageClient, get_client
+from aws_client_impl.s3_client import S3Client
+from cloud_storage_client_api.client import CloudStorageClient, get_client
 
 pytestmark = pytest.mark.integration
 
