@@ -1,21 +1,13 @@
 """Abstract base class for cloud storage clients."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 
-_registry: type[CloudStorageClient] | None = None
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def register_client(client_class: type[CloudStorageClient]) -> None:
-    """Register a concrete CloudStorageClient implementation."""
-    global _registry
-    _registry = client_class
-
-
-def get_client(*, interactive: bool = False) -> CloudStorageClient:
-    """Return an instance of Cloud Storage Client."""
-    if _registry is None:
-        raise NotImplementedError
-    return _registry()
 
 class CloudStorageClient(ABC):
     """Abstract base class defining the contract for a cloud storage client."""
@@ -27,7 +19,6 @@ class CloudStorageClient(ABC):
         Args:
             local_path: Path to the local file.
             remote_path: The S3 object key to upload the file to.
-
 
         Returns:
             True if the upload was successful.
@@ -95,6 +86,18 @@ class CloudStorageClient(ABC):
         raise NotImplementedError
 
 
-def get_client(*, interactive: bool = False) -> CloudStorageClient:
+_client_factory: Callable[..., CloudStorageClient] | None = None
+
+
+def register_client(factory: Callable[..., CloudStorageClient]) -> None:
+    """Register a factory callable that produces a CloudStorageClient."""
+    global _client_factory  # noqa: PLW0603
+    _client_factory = factory
+
+
+def get_client(*, interactive: bool = False) -> CloudStorageClient:  # noqa: ARG001
     """Return an instance of Cloud Storage Client."""
-    raise NotImplementedError
+    if _client_factory is None:
+        msg = "No client implementation registered"
+        raise NotImplementedError(msg)
+    return _client_factory()
