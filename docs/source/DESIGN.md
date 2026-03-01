@@ -57,7 +57,7 @@ A `get_client()` factory function is also exposed. By default it raises `NotImpl
 
 ## Cross-Cutting Concerns
 
-- Credentials must never be hardcoded. All secrets are loaded from environment variables at runtime. Missing variables will raise a `KeyError` immediately, which is intentional
+- Credentials must never be hardcoded. All secrets are loaded from environment variables at runtime for local development. In CI, the pipeline authenticates via OIDC and assumes an IAM role directly — no long-lived access keys are stored anywhere. Missing variables will raise a `KeyError` immediately, which is intentional
 - The interface has zero coupling to the implementation. Swapping to a different provider (GCP, Dropbox, etc.) only requires writing a new implementation package.
 - Multipart upload introduces complexity but is necessary for large files. The abort-on-failure pattern prevents AWS from charging for incomplete uploads indefinitely.
 - Future iterations will add a server layer on top of this client, so keeping the interface clean now reduces future refactoring cost.

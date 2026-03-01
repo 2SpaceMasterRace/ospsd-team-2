@@ -121,7 +121,7 @@ You can put these in a local `.env` file — it is listed in `.gitignore` and wi
 
 > **Tip:** You only need credentials to run `main.py` or the E2E tests against real S3. Unit and integration tests mock all AWS calls and work without credentials.
 
-For CI/CD, store credentials in your CircleCI project context (see [CONTRIBUTING.md](CONTRIBUTING.md#cicd)).
+> **Note:** CI never uses long-lived access keys. The CircleCI pipeline authenticates via OIDC and assumes an IAM role directly. See [CONTRIBUTING.md](CONTRIBUTING.md#cicd) for setup instructions.
 
 ---
 

@@ -393,13 +393,75 @@ Test results and coverage reports are uploaded as artifacts and visible in the C
 
 ### Setting up the AWS context for E2E tests
 
-The E2E job uses a CircleCI context named `aws-ospsd`. To set it up:
+The E2E job uses a CircleCI context named `aws-ospsd`. CI authenticates to AWS using OIDC — no long-lived access keys are stored anywhere.
+
+> **Note:** CI never uses long-lived access keys. The CircleCI pipeline authenticates via OIDC and assumes an IAM role directly. The credentials you create here are for local development only.
+
+#### 1. Create the IAM OIDC Identity Provider
+
+1. Go to **AWS Console → IAM → Identity providers → Add provider**.
+2. Choose **OpenID Connect**.
+3. Set the **Provider URL** to `https://oidc.circleci.com/org/<your-circleci-org-id>` (your CircleCI organization ID is found under CircleCI → Organization Settings).
+4. Click **Get thumbprint**.
+5. Set the **Audience** to `https://oidc.circleci.com/org/<your-circleci-org-id>`.
+6. Click **Add provider**.
+
+#### 2. Create the IAM Role
+
+1. Go to **IAM → Roles → Create role**.
+2. Choose **Web identity** as the trusted entity type and select the identity provider you just created.
+3. Use this trust policy, replacing the placeholders:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<your-aws-account-id>:oidc-provider/oidc.circleci.com/org/<your-circleci-org-id>"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringLike": {
+          "oidc.circleci.com/org/<your-circleci-org-id>:sub": "org/<your-circleci-org-id>/project/<your-circleci-project-id>/user/*"
+        }
+      }
+    }
+  ]
+}
+```
+
+4. Attach a policy granting the minimum S3 permissions the tests need:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::<your-bucket-name>",
+        "arn:aws:s3:::<your-bucket-name>/*"
+      ]
+    }
+  ]
+}
+```
+
+5. Name the role (e.g. `circleci-ospsd-e2e`) and save the ARN — you will need it in the next step.
+
+#### 3. Create the CircleCI context
 
 1. Go to CircleCI → **Organization Settings** → **Contexts** → **Create Context** named `aws-ospsd`.
 2. Add these environment variables to the context:
-   - `AWS_ROLE_ARN` — IAM role ARN with S3 access
+   - `AWS_ROLE_ARN` — the role ARN from step 2 above
    - `AWS_REGION` — e.g. `us-east-1`
    - `AWS_BUCKET_NAME` — the test bucket name
-3. The pipeline will automatically assume the role using OIDC.
+3. Do **not** add `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` — the pipeline assumes the role via OIDC automatically.
 
 If you do not have access to the CircleCI organization, ask a team member to add you.
