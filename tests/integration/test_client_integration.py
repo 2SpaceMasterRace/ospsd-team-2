@@ -9,7 +9,8 @@ to know which class they receive.
 import pytest
 
 from aws_client_impl.s3_client import S3Client
-from cloud_storage_client_api.client import CloudStorageClient, get_client
+import cloud_storage_client_api.client as _cloud_storage_api
+from cloud_storage_client_api.client import CloudStorageClient
 
 pytestmark = pytest.mark.integration
 
@@ -19,7 +20,7 @@ def test_dependency_injection_works() -> None:
     """Importing aws_client_impl registers S3Client with the interface factory."""
     import aws_client_impl  # noqa: F401, PLC0415
 
-    client = get_client()
+    client = _cloud_storage_api.get_client()
     assert isinstance(client, CloudStorageClient)
     assert isinstance(client, S3Client)
 
@@ -29,8 +30,8 @@ def test_factory_returns_correct_type() -> None:
     """get_client() consistently returns distinct CloudStorageClient instances."""
     import aws_client_impl  # noqa: F401, PLC0415
 
-    client1 = get_client()
-    client2 = get_client()
+    client1 = _cloud_storage_api.get_client()
+    client2 =_cloud_storage_api.get_client()
     assert isinstance(client1, CloudStorageClient)
     assert isinstance(client2, CloudStorageClient)
     assert client1 is not client2

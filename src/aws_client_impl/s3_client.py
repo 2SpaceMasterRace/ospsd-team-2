@@ -740,3 +740,17 @@ class S3Client(CloudStorageClient):
             )
             return False
         return True
+    
+    # Dependency Injection
+
+def get_client_impl(*, interactive: bool = False) -> S3Client:
+    """Concrete factory that returns an S3Client instance."""
+    return S3Client(
+        bucket_name=os.environ["AWS_BUCKET_NAME"],
+        region_name=os.environ.get("AWS_REGION", "us-east-1"),
+    )
+
+def register() -> None:
+    """Replace the abstract get_client with this implementation."""
+    import cloud_storage_client_api.client as _api
+    _api.get_client = get_client_impl  # type: ignore[assignment]
