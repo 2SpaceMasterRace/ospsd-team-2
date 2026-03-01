@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from botocore.exceptions import ClientError
 
-from src import s3_client as s3_mod
+from aws_client_impl.src import s3_client as s3_mod
 from aws_client_impl.src.s3_client import S3Client
 
 if TYPE_CHECKING:
